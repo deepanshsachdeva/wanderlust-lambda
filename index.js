@@ -90,6 +90,54 @@ const TravelIntentHandler = {
 };
 
 /**
+ * LIST INTENT handler
+ */
+const ListIntentHandler = {
+	canHandle(handlerInput) {
+		return handlerInput.requestEnvelope.request.type === 'IntentRequest' 
+		&& handlerInput.requestEnvelope.request.intent.name === 'ListIntent';
+	},
+	async handle(handlerInput) {
+    let speech = new SsmlBuilder();
+
+		//get persistent attributes
+		let pAttributes = await Helpers.getPersistentAttributes(handlerInput);
+		let trips = _.get(pAttributes, 'trips', []);
+
+		let cardText = "";
+
+		if (_.isEmpty(trips)) {
+			speech.say("You don't have any travel plans. Seems like wanderlust has not striked you yet.");
+
+			cardText += "You don't have any travel plans"; 
+		} else {
+			speech.say("Here are the details of trips planned so far.");
+
+			_.forEach(trips, (trip) => {
+				const {destination, month} = trip;
+
+				speech.say(`${destination} in ${month},`);
+
+				cardText += `${destination} (${month}) \n`;
+			});
+
+			speech.pause('500ms');
+
+			if (_.size(trips) > 3) {
+				speech.say("Pack your bags, and get ready with your passport. You have got lot to travel");
+			} else {
+				speech.say("Don't count the days, make the days count. Let's add few more places to your wander list");
+			}
+		}
+
+		return handlerInput.responseBuilder
+				.speak(speech.ssml(true))
+				.withSimpleCard('Your WanderLIST', cardText)
+				.getResponse();
+	}
+};
+
+/**
  * FALLBACK handler
  * 
  */
@@ -179,7 +227,8 @@ const ResponseInterceptor = {
 module.exports.handler = SkillBuilder
   .addRequestHandlers(
     LaunchRequestHandler,
-    TravelIntentHandler,
+		TravelIntentHandler,
+		ListIntentHandler,
     FallbackIntentHandler,
     SessionEndedRequestHandler
   )
