@@ -31,9 +31,9 @@ const LaunchRequestHandler = {
 					.say("What would you like to do ?")
 
     return handlerInput.responseBuilder
-			.speak(speech.ssml(true))
-			.withShouldEndSession(false)
-      .getResponse();
+		.speak(speech.ssml(true))
+		.withShouldEndSession(false)
+		.getResponse();
   }
 }
 
@@ -54,8 +54,8 @@ const TravelIntentHandler = {
 			//send dialog directive, if intent request is not complete
 
 			return handlerInput.responseBuilder
-						.addDelegateDirective(updatedIntent)
-						.getResponse();
+				.addDelegateDirective(updatedIntent)
+				.getResponse();
 		} else {
 
 			//check for intent confirmation
@@ -233,17 +233,17 @@ const ResponseInterceptor = {
 };
 
 module.exports.handler = SkillBuilder
-  .addRequestHandlers(
-    LaunchRequestHandler,
+	.addRequestHandlers(
+		LaunchRequestHandler,
 		TravelIntentHandler,
 		ListIntentHandler,
-    FallbackIntentHandler,
-    SessionEndedRequestHandler
-  )
-  .addErrorHandlers(ErrorHandler)
-  .addRequestInterceptors(RequestInterceptor)
+		FallbackIntentHandler,
+		SessionEndedRequestHandler
+	)
+	.addErrorHandlers(ErrorHandler)
+	.addRequestInterceptors(RequestInterceptor)
 	.addResponseInterceptors(ResponseInterceptor)
 	.withPersistenceAdapter(PersistenceAdapter)
 	.withApiClient(AlexaApiClient)
-  .withSkillId(process.env.ALEXA_SKILL_ID)
-  .lambda();
+	.withSkillId(process.env.ALEXA_SKILL_ID)
+	.lambda();
