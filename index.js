@@ -1,6 +1,13 @@
 const _ = require('lodash');
 const SsmlBuilder = require('ssml-builder');
-const { SkillBuilders } = require('ask-sdk');
+const { SkillBuilders, DynamoDbPersistenceAdapter } = require('ask-sdk');
+
+const Helpers = require('./helpers');
+
+const PersistenceAdapter = new DynamoDbPersistenceAdapter({
+	tableName: process.env.AWS_DYNAMODB_TABLE,
+	createTable: true
+});
 
 const SkillBuilder = SkillBuilders.custom();
 
@@ -43,6 +50,7 @@ const TravelIntentHandler = {
 		
 		if (intentRequest.dialogState != "COMPLETED") {
 			//send dialog directive, if intent request is not complete
+
 			return handlerInput.responseBuilder
 						.addDelegateDirective(updatedIntent)
 						.getResponse();
@@ -51,12 +59,26 @@ const TravelIntentHandler = {
 			//check for intent confirmation
 			if (updatedIntent.confirmationStatus != "DENIED") {
 				//confirmed, do this
+				
+				//get persistent attributes
+				let pAttributes = await Helpers.getPersistentAttributes(handlerInput);
+				let trips = _.get(pAttributes, 'trips', []);
+
+				//get slot values
 				const destination = _.get(updatedIntent, 'slots.destination.value');
 				const month       = _.get(updatedIntent, 'slots.month.value');
+
+				//push to existing trips
+				trips.push({ destination, month });
+				_.set(pAttributes, 'trips', trips);
+
+				//save to db
+				await Helpers.setPersistentAttributes(handlerInput, pAttributes);
 
 				speech.say(`Ok. I've saved your interest to visit ${destination} in the month of ${month}`);
 			} else {
 				//denied, do this
+
 				speech.say(`Ok. But do remember, Life is short, but world is wide.`);
 			}
 
@@ -163,6 +185,7 @@ module.exports.handler = SkillBuilder
   )
   .addErrorHandlers(ErrorHandler)
   .addRequestInterceptors(RequestInterceptor)
-  .addResponseInterceptors(ResponseInterceptor)
+	.addResponseInterceptors(ResponseInterceptor)
+	.withPersistenceAdapter(PersistenceAdapter)
   .withSkillId(process.env.ALEXA_SKILL_ID)
   .lambda();
