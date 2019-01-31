@@ -1,6 +1,139 @@
+const _ = require('lodash');
 const SsmlBuilder = require('ssml-builder');
 const { SkillBuilders } = require('ask-sdk');
 
 const SkillBuilder = SkillBuilders.custom();
 
-module.exports.handler = SkillBuilder.withSkillId(process.env.ALEXA_SKILL_ID).lambda();
+/**
+ * LAUNCH REQUEST handler
+ * 
+ */
+const LaunchRequestHandler = {
+	canHandle(handlerInput) {
+		return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
+	},
+	async handle(handlerInput) {
+    //intent handler code
+
+    return handlerInput.responseBuilder
+      .speak("Welcome to wanderlust!")
+      .getResponse();
+  }
+}
+
+/**
+ * TRAVEL INTENT handler
+ */
+const TravelIntentHandler = {
+	canHandle(handlerInput) {
+		return handlerInput.requestEnvelope.request.type === 'IntentRequest' 
+		&& handlerInput.requestEnvelope.request.intent.name === 'TravelIntent';
+	},
+	async handle(handlerInput) {
+    //intent handler code
+
+    return handlerInput.responseBuilder
+      .speak("Let's travel!")
+      .getResponse();
+  }
+};
+
+/**
+ * FALLBACK handler
+ * 
+ */
+const FallbackIntentHandler = {
+	canHandle(handlerInput) {
+	  return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+		  && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.FallbackIntent';
+	},
+	handle(handlerInput, error) {
+		return handlerInput.responseBuilder
+			.speak("Sorry! I can't understand the command")
+			.getResponse();
+	}
+};
+
+/**
+ * SESSION END request handler
+ * 
+ */
+const SessionEndedRequestHandler = {
+	canHandle(handlerInput) {
+	  return handlerInput.requestEnvelope.request.type === 'SessionEndedRequest';
+	},
+	handle(handlerInput) {
+		//session cleanup
+
+	  return handlerInput.responseBuilder.getResponse();
+	}
+};
+
+/**
+ * ERROR handler
+ * 
+ */
+const ErrorHandler = {
+	canHandle() {
+	  return true;
+	},
+	handle(handlerInput, error) {
+		let errorMessage = error.message;
+
+	  console.log("------- ERROR HANDLER -------");
+	  console.log(`ERROR: ${errorMessage}`);
+		console.log("------- ERROR HANDLER -------");
+
+    return handlerInput.responseBuilder
+      .speak('Oops! There seems to be some error. Please try again later.')
+      .getResponse();
+	},
+};
+
+/**
+ * Request Interceptor
+ * 
+ */
+const RequestInterceptor = {
+	process(handlerInput) {
+		const request = _.get(handlerInput, 'requestEnvelope.request');
+		const intent  = _.get(request, 'intent');
+
+		console.log(`----------- ${request.type} : ${(intent) ? intent.name : "NA"} -----------`);
+		
+		console.log('Skill Request');
+		console.log(request);
+
+		console.log('Intent Slots');
+		console.log(_.get(intent, 'slots'));
+	}
+};
+
+/**
+ * Response Interceptor
+ * 
+ */
+const ResponseInterceptor = {
+	process(handlerInput, response) {
+		const request = _.get(handlerInput, 'requestEnvelope.request');
+		const intent  = _.get(request, 'intent');
+		
+		console.log('Skill Response');
+		console.log(response);
+
+		console.log(`----------- ${request.type} : ${(intent) ? intent.name : "NA"} -----------`);
+	}
+};
+
+module.exports.handler = SkillBuilder
+  .addRequestHandlers(
+    LaunchRequestHandler,
+    TravelIntentHandler,
+    FallbackIntentHandler,
+    SessionEndedRequestHandler
+  )
+  .addErrorHandlers(ErrorHandler)
+  .addRequestInterceptors(RequestInterceptor)
+  .addResponseInterceptors(ResponseInterceptor)
+  .withSkillId(process.env.ALEXA_SKILL_ID)
+  .lambda();
