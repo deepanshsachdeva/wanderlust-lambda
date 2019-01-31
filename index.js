@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const SsmlBuilder = require('ssml-builder');
-const { SkillBuilders, DynamoDbPersistenceAdapter } = require('ask-sdk');
+const { SkillBuilders, DynamoDbPersistenceAdapter, DefaultApiClient } = require('ask-sdk');
 
 const Helpers = require('./helpers');
 
@@ -8,6 +8,8 @@ const PersistenceAdapter = new DynamoDbPersistenceAdapter({
 	tableName: process.env.AWS_DYNAMODB_TABLE,
 	createTable: true
 });
+
+const AlexaApiClient = new DefaultApiClient();
 
 const SkillBuilder = SkillBuilders.custom();
 
@@ -98,7 +100,10 @@ const ListIntentHandler = {
 		&& handlerInput.requestEnvelope.request.intent.name === 'ListIntent';
 	},
 	async handle(handlerInput) {
-    let speech = new SsmlBuilder();
+		let speech = new SsmlBuilder();
+		
+		//trigger progressive response
+		const progressiveResponse = Helpers.callProgressiveResponse(handlerInput, "Please wait... while I fetch your details.");
 
 		//get persistent attributes
 		let pAttributes = await Helpers.getPersistentAttributes(handlerInput);
@@ -129,6 +134,9 @@ const ListIntentHandler = {
 				speech.say("Don't count the days, make the days count. Let's add few more places to your wander list");
 			}
 		}
+
+		//await progressive response before response
+		await progressiveResponse;
 
 		return handlerInput.responseBuilder
 				.speak(speech.ssml(true))
@@ -236,5 +244,6 @@ module.exports.handler = SkillBuilder
   .addRequestInterceptors(RequestInterceptor)
 	.addResponseInterceptors(ResponseInterceptor)
 	.withPersistenceAdapter(PersistenceAdapter)
+	.withApiClient(AlexaApiClient)
   .withSkillId(process.env.ALEXA_SKILL_ID)
   .lambda();
