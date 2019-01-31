@@ -22,7 +22,8 @@ const LaunchRequestHandler = {
 					.say("What would you like to do ?")
 
     return handlerInput.responseBuilder
-      .speak(speech.ssml(true))
+			.speak(speech.ssml(true))
+			.withShouldEndSession(false)
       .getResponse();
   }
 }
