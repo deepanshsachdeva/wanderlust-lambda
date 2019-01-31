@@ -1,0 +1,21 @@
+service: ${file(./env.yml):SERVICE}
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  region: ${file(./env.yml):AWS_REGION}
+  stage: ${file(./env.yml):STAGE}
+
+  environment:
+    ALEXA_SKILL_ID: ${file(./env.yml):SKILL_ID}
+    AWS_DYNAMODB_TABLE: ${file(./env.yml):AWS_DB_TABLE}
+
+plugins: 
+  - serverless-webpack
+  - serverless-offline
+
+functions:
+  alexa:
+    handler: index.handler
+    events:
+      - alexaSkill: ${file(./env.yml):SKILL_ID}
