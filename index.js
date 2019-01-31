@@ -36,11 +36,33 @@ const TravelIntentHandler = {
 		&& handlerInput.requestEnvelope.request.intent.name === 'TravelIntent';
 	},
 	async handle(handlerInput) {
-    //intent handler code
+    let speech        = new SsmlBuilder();
+    let intentRequest = _.get(handlerInput, 'requestEnvelope.request');
+		let updatedIntent = _.get(intentRequest, 'intent');
+		
+		if (intentRequest.dialogState != "COMPLETED") {
+			//send dialog directive, if intent request is not complete
+			return handlerInput.responseBuilder
+						.addDelegateDirective(updatedIntent)
+						.getResponse();
+		} else {
 
-    return handlerInput.responseBuilder
-      .speak("Let's travel!")
-      .getResponse();
+			//check for intent confirmation
+			if (updatedIntent.confirmationStatus != "DENIED") {
+				//confirmed, do this
+				const destination = _.get(updatedIntent, 'slots.destination.value');
+				const month       = _.get(updatedIntent, 'slots.month.value');
+
+				speech.say(`Ok. I've saved your interest to visit ${destination} in the month of ${month}`);
+			} else {
+				//denied, do this
+				speech.say(`Ok. But do remember, Life is short, but world is wide.`);
+			}
+
+			return handlerInput.responseBuilder
+				.speak(speech.ssml(true))
+				.getResponse();
+		}
   }
 };
 
