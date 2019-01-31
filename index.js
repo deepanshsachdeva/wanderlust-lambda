@@ -13,10 +13,16 @@ const LaunchRequestHandler = {
 		return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
 	},
 	async handle(handlerInput) {
-    //intent handler code
+		let speech = new SsmlBuilder();
+		
+		speech.say("Welcome to wanderlust! Everybody loves to travel, I'm sure you do too.")
+					.say("I can help you record your wanderlust moments. Just say, I want to travel, to get started.")
+					.say("You can also say, tell my travel plans, to get details about your trips")
+					.pause("500ms")
+					.say("What would you like to do ?")
 
     return handlerInput.responseBuilder
-      .speak("Welcome to wanderlust!")
+      .speak(speech.ssml(true))
       .getResponse();
   }
 }
